@@ -285,8 +285,8 @@ function to the relevant margin-formatters list."
       (lambda (cand)
 	(if-let ((kind (funcall kind-func cand)))
 	    (kind-icon-formatted kind)
-	  kind-icon--unknown))))
-      
+	  (kind-icon-formatted t))))) ;; as a backup
+
 (defun kind-icon--affixation-function (kind-func &optional ann-func)
   "Create and return a custom kind-icon affixation function.
 The company-kind function should be passed in as KIND-FUNC and
