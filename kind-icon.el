@@ -5,7 +5,7 @@
 ;; Author: J.D. Smith <jdtsmith@gmail.com>
 ;; Homepage: https://github.com/jdtsmith/kind-icon
 ;; Package-Requires: ((emacs "27.1") svg-lib)
-;; Package-Version: 0.1.1
+;; Package-Version: 0.1.3
 ;; Keywords: completion
 
 ;; kind-icon is free software: you can redistribute it
@@ -99,6 +99,7 @@ An alist.")
     (module "{" :icon "file-code-outline" :face font-lock-preprocessor-face)
     (numeric "nu" :icon "numeric" :face font-lock-builtin-face)
     (operator "op" :icon "plus-minus" :face font-lock-comment-delimiter-face)
+    (param "pa" :icon "cog" :face default)
     (property "pr" :icon "application-parentheses-outline" :face font-lock-variable-name-face)
     (reference "rf" :icon "variable-box" :face font-lock-variable-name-face)
     (snippet "S" :icon "note-text-outline" :face font-lock-string-face)
