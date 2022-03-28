@@ -3,9 +3,9 @@
 ;; Copyright (C) 2021  Free Software Foundation, Inc.
 
 ;; Author: J.D. Smith <jdtsmith@gmail.com>
-;; Homepage: https://github.com/jdtsmith/kind-icon
+;; URL: https://github.com/jdtsmith/kind-icon
 ;; Package-Requires: ((emacs "27.1") svg-lib)
-;; Package-Version: 0.1.4
+;; Version: 0.1.5
 ;; Keywords: completion
 
 ;; kind-icon is free software: you can redistribute it
@@ -58,6 +58,7 @@
 (eval-when-compile
   (require 'subr-x))
 (require 'svg-lib nil 'noerror)
+(require 'color)
 
 (defvar kind-icon--cache nil
   "The cache of styled and padded label (text or icon).  
@@ -204,8 +205,6 @@ Uses svg-lib, guarding against non-availability or network errors."
   "Return a fractional blend between two colors RGB1 and RGB2.
 Each is a 3 element list.  The fractional blend point is the
 float FRAC."
-  ;; FIXME: `color-rgb-to-hex' won't be (auto)loaded if `svg-lib' is
-  ;; not installed.
   (apply #'color-rgb-to-hex
 	 (cl-mapcar (lambda (a b)
 		      (+ (* a frac) (* b (- 1.0 frac))))
