@@ -5,7 +5,7 @@
 ;; Author: J.D. Smith <jdtsmith@gmail.com>
 ;; URL: https://github.com/jdtsmith/kind-icon
 ;; Package-Requires: ((emacs "27.1") svg-lib)
-;; Version: 0.1.7
+;; Version: 0.1.8
 ;; Keywords: completion
 
 ;; kind-icon is free software: you can redistribute it
@@ -88,6 +88,7 @@ An vector of two alist for non-terminal and terminal.")
     (boolean "b" :icon "circle-half-full" :face font-lock-builtin-face)
     (class "c" :icon "view-grid-plus-outline" :face font-lock-type-face)
     (color "#" :icon "palette" :face success)
+    (command "cm" :icon "code-greater-than" :face default)
     (constant "co" :icon "lock-remove-outline" :face font-lock-constant-face)
     (constructor "cn" :icon "table-column-plus-after" :face font-lock-function-name-face)
     (enummember "em" :icon "format-list-checks" :face font-lock-builtin-face)
@@ -99,6 +100,7 @@ An vector of two alist for non-terminal and terminal.")
     (interface "if" :icon "application-brackets-outline" :face font-lock-type-face)
     (keyword "kw" :icon "key-variant" :face font-lock-keyword-face)
     (macro "mc" :icon "lambda" :face font-lock-keyword-face)
+    (magic "ma" :icon "auto-fix" :face font-lock-builtin-face)
     (method "m" :icon "function-variant" :face font-lock-function-name-face)
     (function "f" :icon "function" :face font-lock-function-name-face)
     (module "{" :icon "file-code-outline" :face font-lock-preprocessor-face)
@@ -110,12 +112,12 @@ An vector of two alist for non-terminal and terminal.")
     (snippet "S" :icon "note-text-outline" :face font-lock-string-face)
     (string "s" :icon "sticker-text-outline" :face font-lock-string-face)
     (struct "%" :icon "code-braces" :face font-lock-variable-name-face)
-    (text "tx" :icon "script-text-outline" :face shadow)
+    (text "tx" :icon "script-text-outline" :face font-lock-doc-face)
     (typeparameter "tp" :icon "format-list-bulleted-type" :face font-lock-type-face)
-    (unit "u" :icon "ruler-square" :face shadow)
+    (unit "u" :icon "ruler-square" :face font-lock-constant-face)
     (value "v" :icon "plus-circle-outline" :face font-lock-builtin-face)
     (variable "va" :icon "variable" :face font-lock-variable-name-face)
-    (t "." :icon "crosshairs-question" :face shadow))
+    (t "." :icon "crosshairs-question" :face font-lock-warning-face))
   "Mapping of kinds.
 The format should be an alist of type:
 
@@ -222,11 +224,9 @@ float FRAC."
   "Preview all kind icons.
 In the process, svg-lib also downloads and caches them."
   (interactive)
-  (with-current-buffer (get-buffer-create "*kind-icon-preview*")
+  (with-current-buffer-window "*kind-icon-preview*" nil nil
     (font-lock-mode 0)
-    (view-buffer-other-window (current-buffer))
     (let ((inhibit-read-only t))
-      (erase-buffer)
       (insert "kind-icon badges\n\ntxt icn\tkind\n")
       (mapc (lambda (k)
 	      (apply 'insert
@@ -241,7 +241,7 @@ In the process, svg-lib also downloads and caches them."
     (help-mode)))
 
 (defun kind-icon-formatted (kind)
-  "Return a formatted kind badge, either icon or text abbreviation.
+  "Return a formatted KIND badge, either icon or text abbreviation.
 Caches this badge in `kind-icon--cache', and returns the cached
 value, if set.  If no matching kind is specified, returns a `??'
 warning label.  For the foreground color of the badge, uses the
