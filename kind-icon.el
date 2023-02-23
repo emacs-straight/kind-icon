@@ -54,14 +54,14 @@
 ;; both short-text and icons.
 
 ;;; Code:
-
-(eval-when-compile
-  (require 'subr-x))
+(require 'cl-lib)
 (require 'svg-lib nil 'noerror)
 (require 'color)
+(eval-when-compile
+  (require 'subr-x))
 
 (defvar kind-icon--cache [nil nil]
-  "The cache of styled and padded label (text or icon).  
+  "The cache of styled and padded label (text or icon).
 An vector of two alist for non-terminal and terminal.")
 
 (defun kind-icon-reset-cache ()
@@ -70,6 +70,8 @@ An vector of two alist for non-terminal and terminal.")
   (setq kind-icon--cache (make-vector 2 nil)))
 
 (defun kind-icon--set-default-clear-cache (&rest args)
+  "Clear cache and call `set-default' on ARGS.
+Use as a custom-set function."
   (kind-icon-reset-cache)
   (apply #'set-default args))
 
@@ -80,6 +82,7 @@ An vector of two alist for non-terminal and terminal.")
 
 (defcustom kind-icon-use-icons (featurep 'svg-lib)
   "Whether to use icons for prefix display."
+  :group 'kind-icon
   :set #'kind-icon--set-default-clear-cache
   :type 'boolean)
 
@@ -129,18 +132,19 @@ the SHORT-TEXT (two characters max), depending on the value of
 variable `kind-icon-use-icons' and presence of :icon in the
 PLIST.  KIND and SHORT-TEXT are required.  The PLIST is optional
 and can include keywords :icon and :face.  :icon is a name of an
-icon from the material collection (see `svg-lib'). :face is a
+icon from the material collection (see `svg-lib').  :face is a
 face from which the :foreground face-property is used for the
-foreground. If `kind-icon-blend-background' is non-nil, the
+foreground.  If `kind-icon-blend-background' is non-nil, the
 icon's background color is automatically computed to lie between
 the default-face or frame background color and the foreground
 color (see `kind-icon-blend-frac').  If
 `kind-icon-blend-background' is nil, the background color is
 taken from the :face's background in this map, or, if that is
 missing or unspecified, from the frame's background color."
-  :link '(url-link "https://materialdesignicons.com")
+  :group 'kind-icon
+  :link '(url-link "https://pictogrammers.com/library/mdi/")
   :set #'kind-icon--set-default-clear-cache
-  :type '(repeat 
+  :type '(repeat
 	  (list :tag "Mapping"
 		(symbol :tag "Kind")
 		(string :tag "Short-Text")
@@ -154,14 +158,24 @@ missing or unspecified, from the frame's background color."
 
 (defcustom kind-icon-blend-background t
   "Whether to set a custom background blended from foreground."
+  :group 'kind-icon
   :type 'boolean
   :set #'kind-icon--set-default-clear-cache)
 
 (defcustom kind-icon-blend-frac 0.12
   "Fractional blend between foreground and background colors.
 This is used for the prefix background, if
-kind-icon-blend-background is non-nil."
+`kind-icon-blend-background' is non-nil."
+  :group 'kind-icon
   :type 'float
+  :set #'kind-icon--set-default-clear-cache)
+
+(defcustom kind-icon-extra-space nil
+  "Whether to include extra one-half space between the icon and the candidate.
+Note that this extra space has no background color applied, so
+inherits the UI's styling (including selection)."
+  :group 'kind-icon
+  :type 'boolean
   :set #'kind-icon--set-default-clear-cache)
 
 (defcustom kind-icon-default-face nil
@@ -172,6 +186,7 @@ the foreground color is taken from the foreground of this face,
 or (if nil) to the default frame foreground color.  The
 background color is also taken from this face, if provided,
 otherwise defaulting to the frame background color."
+  :group 'kind-icon
   :type 'face
   :set #'kind-icon--set-default-clear-cache)
 
@@ -179,12 +194,15 @@ otherwise defaulting to the frame background color."
   '(:padding 0 :stroke 0 :margin 0 :radius 0 :height 1.0 :scale 1.0)
   "Default style parameters for building SVG icons.
 See `svg-lib-style-compute-default'."
+  :group 'kind-icon
   :type 'plist
   :set #'kind-icon--set-default-clear-cache)
 
 (defun kind-icon--get-icon-safe (icon &optional col bg-col)
   "Retrieve ICON (a string) from the material database.
-Uses svg-lib, guarding against non-availability or network errors."
+Uses svg-lib, guarding against non-availability or network
+errors.  COL and BG-COL are foreground and background color to
+apply to the icon."
   (if (fboundp 'svg-lib-icon)
       (condition-case err
 	  (apply #'svg-lib-icon icon nil
@@ -197,6 +215,7 @@ Uses svg-lib, guarding against non-availability or network errors."
 	 nil))))
 
 (defun kind-icon--preview (widget _e)
+  "Preview the icon in WIDGET in the echo area."
   (let* ((icon-name (widget-value widget)))
     (message "%S looks like: %s" icon-name
 	     (if-let ((icon (kind-icon--get-icon-safe icon-name)))
@@ -213,6 +232,7 @@ float FRAC."
 		    rgb1 rgb2)))
 
 (defsubst kind-icon--metadata-get (metadata type-name)
+  "Get METADATA for keyword TYPE-NAME from the completion properties."
   (or
    (plist-get completion-extra-properties (intern (format ":%s" type-name)))
    (cdr (assq (intern type-name) metadata))))
@@ -224,21 +244,31 @@ float FRAC."
   "Preview all kind icons.
 In the process, svg-lib also downloads and caches them."
   (interactive)
+  (kind-icon-reset-cache)
   (with-current-buffer-window "*kind-icon-preview*" nil nil
+
     (font-lock-mode 0)
-    (let ((inhibit-read-only t))
-      (insert "kind-icon badges\n\ntxt icn\tkind\n")
+    (let ((inhibit-read-only t)
+	  (extra (kind-icon--extra-space)))
+      (insert (concat "kind-icon badges\n\n"
+		      "txt " extra
+		      "icn" extra
+		      " kind\n"))
       (mapc (lambda (k)
 	      (apply 'insert
 		     `(,(mapconcat
-			 (lambda (v)
-			   (kind-icon-reset-cache)
+			 (lambda (v) 
 			   (let ((kind-icon-use-icons v))
 			     (kind-icon-formatted k)))
 			 '(nil t) " ")
-		       "\t" ,(symbol-name k) "\n")))
+		       " " ,(symbol-name k) "\n")))
 	    (mapcar 'car kind-icon-mapping)))
     (help-mode)))
+
+(defsubst kind-icon--extra-space ()
+  "Format extra space at right of badge."
+  (when kind-icon-extra-space
+    (propertize " " 'display '(space :width 0.5))))
 
 (defun kind-icon-formatted (kind)
   "Return a formatted KIND badge, either icon or text abbreviation.
@@ -256,12 +286,13 @@ the :face's background, `kind-icon-default-face', or the frame
 background-color."
   (let* ((dfw (default-font-width))
 	 (terminal (eq dfw 1))
-	 (slot (if terminal 1 0)))
+	 (slot (if terminal 1 0))
+	 (extra (kind-icon--extra-space)))
     (or (alist-get kind (aref kind-icon--cache slot))
 	(if-let ((map (assq kind kind-icon-mapping))
 		 (plist (cddr map)))
 	    (let* ((kind-face (plist-get plist :face))
-		   (col (or 
+		   (col (or
 			 (cl-loop for face in `(,kind-face ,kind-icon-default-face)
 				  for fcol = (if-let ((face)
 						      (c (face-attribute face :foreground nil t))
@@ -282,36 +313,38 @@ background-color."
 			     (if (and kind-face-bg (not (eq kind-face-bg 'unspecified)))
 				 kind-face-bg
 			       default-bg)))
-		   (half (/ dfw 2))
+		   (half (/ dfw 2))   ; integer division, may truncate
 		   (face-spec `(:weight bold :foreground ,col :background ,bg-col))
 		   (pad-right (propertize " " 'display `(space :width (,half))
 					  'face face-spec))
 		   (pad-left (propertize " " 'display `(space :width (,(- dfw half)))
 					 'face face-spec))
-		   (disp (if-let ((kind-icon-use-icons)
-				  ((not terminal))
-				  (icon-name (plist-get plist :icon))
-				  (icon (kind-icon--get-icon-safe icon-name col bg-col)))
-			     ;; icon: always 2x1, half-space on each side
-			     (propertize ; pretend it's one char to allow padding
-			      (concat pad-left
-				      (propertize "*" 'display icon 'face `(:background ,bg-col))
-				      pad-right))
-			   ;; text, 1 or 2 chars, centered with full or half space on each side
-			   (let* ((txt (truncate-string-to-width (cadr map) 2))
-				  (len (length txt)))
-			     (if (eq len 2)
-				 (if terminal ; no half spaces on terminal
-				     (propertize (concat txt " ") 'face face-spec)
-				   (concat pad-left
-					   (propertize "_" 'display
-						       (propertize txt 'face face-spec))
-					   pad-right))
-			       (propertize (concat " " txt " ") 'face face-spec))))))
+		   (disp (concat
+			  (if-let ((kind-icon-use-icons)
+				   ((not terminal))
+				   (icon-name (plist-get plist :icon))
+				   (icon (kind-icon--get-icon-safe icon-name col bg-col)))
+			      ;; icon: always 2x1, half-space on each side
+			      (propertize ; pretend it's one char to allow padding
+			       (concat pad-left
+				       (propertize "*" 'display icon 'face `(:background ,bg-col))
+				       pad-right))
+			    ;; text, 1 or 2 chars, centered with full or half space on each side
+			    (let* ((txt (truncate-string-to-width (cadr map) 2))
+				   (len (length txt)))
+			      (if (eq len 2)
+				  (if terminal ; no half spaces on terminal
+				      (propertize (concat txt " ") 'face face-spec)
+				    (concat pad-left
+					    (propertize "_" 'display
+							(propertize txt 'face face-spec))
+					    pad-right))
+				(propertize (concat " " txt " ") 'face face-spec))))
+			  extra)))
 	      (if disp
 		  (setf (alist-get kind (aref kind-icon--cache slot)) disp)
-		(propertize (concat pad-left "??" pad-right) 'face font-lock-warning-face)))
-	  kind-icon--unknown))))
+		(propertize (concat pad-left "??" pad-right extra) 'face font-lock-warning-face)))
+	  (concat kind-icon--unknown extra)))))
 
 ;;;###autoload
 (defun kind-icon-margin-formatter (metadata)
@@ -348,12 +381,13 @@ and its result used as the affixation suffix, first setting the
 
 ;;;###autoload
 (defun kind-icon-enhance-completion (completion-function)
-  "A wrapper for completion-in-region-functions.
-This wrapper sets a custom affixation-function which places an
-icon in the prefix slot. Use it like:
+  "A wrapper for `completion-in-region-functions'.
+This wrapper sets a custom `affixation-function' on
+COMPLETION-FUNCTION, which places an icon in the prefix slot.  Use
+it like:
 
-  (setq completion-in-region-function 
-     (kind-icon-enhance-completion 
+  (setq completion-in-region-function
+     (kind-icon-enhance-completion
        completion-in-region-function))"
   (lambda (start end table &optional pred)
     (let* ((str (buffer-substring start (point)))
