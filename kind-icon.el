@@ -198,14 +198,15 @@ See `svg-lib-style-compute-default'."
   :type 'plist
   :set #'kind-icon--set-default-clear-cache)
 
-(defun kind-icon--get-icon-safe (icon &optional col bg-col)
+(defun kind-icon--get-icon-safe (icon &optional col bg-col plist)
   "Retrieve ICON (a string) from the material database.
 Uses svg-lib, guarding against non-availability or network
 errors.  COL and BG-COL are foreground and background color to
-apply to the icon."
+apply to the icon.  PLIST is an optional additional list of key
+value pairs to provide to `svg-lib-icon'."
   (if (fboundp 'svg-lib-icon)
       (condition-case err
-	  (apply #'svg-lib-icon icon nil
+	  (apply #'svg-lib-icon icon plist
 		 `(,@kind-icon-default-style
 		   ,@(if col `(:foreground ,col))
 		   ,@(if bg-col `(:background ,bg-col))))
@@ -249,9 +250,7 @@ float FRAC."
   "Preview all kind icons.
 In the process, svg-lib also downloads and caches them."
   (interactive)
-  (kind-icon-reset-cache)
   (with-current-buffer-window "*kind-icon-preview*" nil nil
-
     (font-lock-mode 0)
     (let ((inhibit-read-only t)
 	  (extra (kind-icon--extra-space)))
@@ -263,9 +262,10 @@ In the process, svg-lib also downloads and caches them."
 	      (apply 'insert
 		     `(,(mapconcat
 			 (lambda (v) 
-			   (let ((kind-icon-use-icons v))
+			   (let ((kind-icon-use-icons v)
+				 (kind-icon--cache nil))
 			     (kind-icon-formatted k)))
-			 '(nil t) " ")
+			 (list nil t) " ")
 		       " " ,(symbol-name k) "\n")))
 	    (mapcar 'car kind-icon-mapping)))
     (help-mode)))
@@ -288,7 +288,8 @@ background-color."
 	 (terminal (eq dfw 1))
 	 (slot (if terminal 1 0))
 	 (extra (kind-icon--extra-space)))
-    (or (alist-get kind (aref kind-icon--cache slot))
+    (or (and kind-icon--cache
+	     (alist-get kind (aref kind-icon--cache slot)))
 	(if-let ((map (assq kind kind-icon-mapping))
 		 (plist (cddr map)))
 	    (let* ((kind-face (plist-get plist :face))
@@ -319,11 +320,14 @@ background-color."
 					  'face face-spec))
 		   (pad-left (propertize " " 'display `(space :width (,(- dfw half)))
 					 'face face-spec))
+		   (plist-extra (cl-loop for (key val) on plist by #'cddr
+					 unless (memq key '(:face :icon))
+					 append `(,key ,val)))
 		   (disp (concat
 			  (if-let ((kind-icon-use-icons)
 				   ((not terminal))
 				   (icon-name (plist-get plist :icon))
-				   (icon (kind-icon--get-icon-safe icon-name col bg-col)))
+				   (icon (kind-icon--get-icon-safe icon-name col bg-col plist-extra)))
 			      ;; icon: always 2x1, half-space on each side
 			      (propertize ; pretend it's one char to allow padding
 			       (concat pad-left
@@ -341,9 +345,11 @@ background-color."
 					    pad-right))
 				(propertize (concat " " txt " ") 'face face-spec))))
 			  extra)))
-	      (if disp
-		  (setf (alist-get kind (aref kind-icon--cache slot)) disp)
-		(propertize (concat pad-left "??" pad-right extra) 'face font-lock-warning-face)))
+	      (if (and kind-icon--cache disp)
+		  (setf (alist-get kind (aref kind-icon--cache slot)) disp))
+	      (or disp
+		  (propertize (concat pad-left "??" pad-right extra)
+			      'face font-lock-warning-face)))
 	  (concat kind-icon--unknown extra)))))
 
 ;;;###autoload
