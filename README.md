@@ -64,7 +64,7 @@ The configuration defaults should work fine, but `kind-icon` can be customized t
 
 - `kind-icon-use-icons`: If non-nil (the default), prefer icons for prefix badges.  Otherwise, use text labels.  Individual kind entries can also have their icons disabled by removing the `:icon` property in the mapping (see below).  If `svg-lib` is unable to download a named icon and it is not cached on disk, text labels for that kind will be used as a fallback. 
 
-- `kind-icon-mapping`: This is the top level configuration mapping `:company-kind` "types" like `'variable` and `'function`.  Each item in this list has the format `(sym short-text :keyword value ...)` where `sym` is the kind (a symbol), and `short-text` is the abbreviated text to display (if icons are not used), both of which must be present.  The rest of the list is a property list with optional keys `:icon` and `:face`.  The latter will be used to set the text foreground and (possibly) background colors on the badge.  The former specifies an icon to use, and is simply a string name from the free [material icon library](https://pictogrammers.com/library/mdi/) used by [svg-lib](https://github.com/rougier/svg-lib).  Try `M-x customize-variable kind-icon-mapping` for a nice interface including an icon Preview button.  Pro-tip: keep your code buffer open with completion popped-up alongside the customization buffer.  When you apply changes, they are immediately applied.
+- `kind-icon-mapping`: This is the top level configuration mapping `:company-kind` "types" like `'variable` and `'function`.  Each item in this list has the format `(sym short-text :keyword value ...)` where `sym` is the kind (a symbol), and `short-text` is the abbreviated text to display (if icons are not used), both of which must be present.  The rest of the list is a property list with optional keys `:icon` and `:face`.  The latter will be used to set the text foreground and (possibly) background colors on the badge.  The former specifies an icon to use, and is simply a string name, by default from the free [material icon library](https://pictogrammers.com/library/mdi/) used by [svg-lib](https://github.com/rougier/svg-lib).  Try `M-x customize-variable kind-icon-mapping` for a nice interface including an icon Preview button.  Pro-tip: keep your code buffer open with completion popped-up alongside the customization buffer.  When you apply changes, they are immediately applied. **Update** as of v0.2, additional keywords supported by svg-lib can be added, including `:collection`, which allows the use of other icon libraries, including, in recent svg-lib versions, vscode-icons. Please note that **only monochrome icons are supported**; if you configure icons which have hard-coded colors in the SVG file (as some vscode-icons do), they will not be displayed correctly.   If you want to switch the collection for all icons, add (e.g) `:collection "octicon"` to `kind-icon-default-style`. 
 
 - `kind-icon-default-face`: A face from which the icon background color will be taken and blended with the `:face` foreground color in the mapping table to create a custom background color.  If not set, the frame default background color will be used for this purpose.  Similarly, the foreground color for this face, if set, will be used if a `:face` foreground is missing from the mapping. 
 
@@ -86,7 +86,7 @@ By default, `kind-icon` creates a _blended_ background color that is a mix of a 
 
 ### Icons 
 
-Check the [material icon library](https://materialdesignicons.com) for the icons you can use, more than 6,500 of them!  All you need to "use" an icon is its name.  The easiest approach is to `M-x customize-variable kind-icon-mapping`, find the kind you are interested in, and change its icon. Hit the `Preview` button and check the message buffer to confirm it's the icon you were after, and Apply your changes.
+Check the [material icon library](https://pictogrammers.com/library/mdi/) for the icons you can use, more than 7,000 of them!  All you need to "use" an icon is its name.  The easiest approach is to `M-x customize-variable kind-icon-mapping`, find the kind you are interested in, and change its icon. Hit the `Preview` button and check the message buffer to confirm it's the icon you were after, and Apply your changes.
 
 **Note that `svg-lib`, which `kind-icon` uses, downloads and caches icons, by default in `.emacs.d/.cache/svg-lib/`.**  If no network connection is present, and the icon has not been cached on disk, the short-text is used as a backup for that session. 
 
@@ -108,7 +108,8 @@ Use `M-x kind-icon-preview-all` to reset and preview all icons (text and SVG ico
 
 <div align="center">
 
-  ![image](https://user-images.githubusercontent.com/93749/167690072-d8822ada-62b8-4b38-b8ea-987d83b38951.png)
+  <img width="193" alt="kind-icon preview" src="https://user-images.githubusercontent.com/93749/222329622-8440d593-cfae-46a8-ab3f-0f3349b88260.png">
+
 
 </div>
 
