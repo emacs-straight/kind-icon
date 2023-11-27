@@ -4,9 +4,9 @@
 
 ;; Author: J.D. Smith <jdtsmith@gmail.com>
 ;; URL: https://github.com/jdtsmith/kind-icon
-;; Package-Requires: ((emacs "27.1") svg-lib)
-;; Version: 0.2.0
-;; Keywords: completion
+;; Package-Requires: ((emacs "27.1") (svg-lib "0.2.8"))
+;; Version: 0.2.1
+;; Keywords: completion convenience
 
 ;; kind-icon is free software: you can redistribute it
 ;; and/or modify it under the terms of the GNU General Public License
@@ -160,7 +160,7 @@ missing or unspecified, from the frame's background color."
 				       :action kind-icon--preview))
 			(:face (face :tag "Face")))))))
 
-(defcustom kind-icon-blend-background t
+(defcustom kind-icon-blend-background nil
   "Whether to set a custom background blended from foreground."
   :group 'kind-icon
   :type 'boolean
@@ -195,7 +195,7 @@ otherwise defaulting to the frame background color."
   :set #'kind-icon--set-default-clear-cache)
 
 (defcustom kind-icon-default-style
-  '(:padding 0 :stroke 0 :margin 0 :radius 0 :height 1.0 :scale 1.0)
+  '(:padding 0 :stroke 0 :margin 0 :radius 0 :height 1.0 :scale 1.0 :background nil)
   "Default style parameters for building SVG icons.
 See `svg-lib-style-compute-default'."
   :group 'kind-icon
@@ -213,7 +213,7 @@ value pairs to provide to `svg-lib-icon'."
 	  (apply #'svg-lib-icon icon plist
 		 `(,@kind-icon-default-style
 		   ,@(if col `(:foreground ,col))
-		   ,@(if bg-col `(:background ,bg-col))))
+		   :background ,bg-col)) ; nil = transparent
 	((error)
 	 (warn "Error retrieving icon %s, falling back on short-text\n%s"
 	       icon (cdr err))
@@ -316,8 +316,7 @@ background-color."
 				(color-name-to-rgb default-bg)
 				kind-icon-blend-frac)
 			     (if (and kind-face-bg (not (eq kind-face-bg 'unspecified)))
-				 kind-face-bg
-			       default-bg)))
+				 kind-face-bg)))
 		   (half (/ dfw 2))   ; integer division, may truncate
 		   (face-spec `(:weight bold :foreground ,col :background ,bg-col))
 		   (pad-right (propertize " " 'display `(space :width (,half))
