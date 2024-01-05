@@ -39,8 +39,9 @@ To enable for completion UI's with margin-formatters capability such as [corfu](
 (use-package kind-icon
   :ensure t
   :after corfu
-  :custom
-  (kind-icon-default-face 'corfu-default) ; to compute blended backgrounds correctly
+  ;:custom
+  ; (kind-icon-blend-background t)
+  ; (kind-icon-default-face 'corfu-default) ; only needed with blend-background
   :config
   (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
 ```
@@ -83,6 +84,8 @@ The configuration defaults should work fine, but `kind-icon` can be customized t
 
 - `kind-icon-blend-frac`: The fractional blend between custom badge `:face` foreground and background (see above) color to use as a custom background for each badge.  A value of 0.0 simply replicates the background color.  Values should likely stay below 0.3 or so.
 
+- `kind-icon-default-style`: Default style to build `svg-lib` icons with.  Normally there is no need to configure this.  Note that `svg-lib` accepts `:background nil` to produce SVG with transparent backgrounds; this will be overridden if `kind-icon-blend-background` is non-nil.  Set `:height` to a slightly smaller value if line spacing issues occur.  You can switch the default `svg-lib` "collection" from material by adding, e.g. `:collection "octicon"` to this plist (see `svg-lib-icon-collections`).
+
 ### Colors
 
 If you don't like the default colors of the icons, you can customize the associated face, choose another pre-existing face, or substitute your own face. You can also change how the background color is displayed. 
@@ -93,7 +96,7 @@ Icon foreground colors are matched in the default mapping to the face colors use
 
 #### Background color
 
-By default, `kind-icon` creates a _blended_ background color that is a mix of a bit of the foreground color and the normal completion background (control the mix with `kind-icon-blend-frac`).  Note that if your completion UI uses a different background color from your normal buffer, you should configure the face it uses in `kind-icon-default-face`. If you disable `kind-icon-blend-background`, `kind-icon` will use both the foreground _and_ (if set) background from the configured `:face` for each kind, allowing you to configure arbitrary colors.
+By default, `kind-icon` uses no special background color for the icons, which means selection highlighting covers the entire row (candidate + icon).  It can optionally create _blended_ background colors for each icon, mixing of a bit of the icon's foreground color with the normal completion background (control the mix with `kind-icon-blend-frac`).  See `kind-icon-blend-background`.  Note that if you enable this, and your completion UI uses a different background color from your normal buffer, you should configure the face it uses with `kind-icon-default-face`.
 
 ### Icons 
 
